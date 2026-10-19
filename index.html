@@ -580,8 +580,13 @@ if('speechSynthesis' in window){
   pickVoices();
   speechSynthesis.onvoiceschanged = pickVoices;
 }
+function isWeChat(){ return /MicroMessenger/i.test(navigator.userAgent); }
+function voiceUnsupported(){ return !('speechSynthesis' in window); }
 function speak(text, opts={}){
-  if(!('speechSynthesis' in window)){ toast('此设备不支持语音朗读'); return; }
+  if(voiceUnsupported()){
+    toast(isWeChat() ? '微信里不能朗读:点右上角「···」→ 用浏览器打开' : '此浏览器不支持朗读,请用 Safari / Chrome 打开');
+    return;
+  }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = opts.zh ? 'zh-CN' : 'en-US';
@@ -1024,6 +1029,15 @@ setInterval(()=>{
 renderStars();
 buildTopicPills();
 renderCard();
+// 不支持朗读的浏览器(如微信内置):首页显示引导横幅
+if(voiceUnsupported()){
+  const banner=document.createElement('div');
+  banner.style.cssText='margin-top:14px;background:#FFEBEE;border:3px dashed #FF6B6B;border-radius:16px;padding:14px 16px;font-size:14px;color:#C62828;line-height:1.8;text-align:center;';
+  banner.innerHTML=isWeChat()
+    ? '📣 <b>微信里无法朗读英语</b><br>请点右上角 <b>「···」</b> → 选择 <b>「在浏览器打开」</b><br>(iPhone 用 Safari,安卓用 Chrome)'
+    : '📣 <b>当前浏览器不支持朗读</b><br>请改用 <b>Safari</b>(iPhone)或 <b>Chrome</b>(安卓)打开本页';
+  document.querySelector('#page-home .hero').after(banner);
+}
 
 /* service worker 注册 */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
